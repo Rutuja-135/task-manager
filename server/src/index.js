@@ -25,6 +25,7 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 4000;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+const CLIENT_DIST = path.resolve(__dirname, '../../client/dist');
 const UPLOAD_DIR = path.resolve(
   __dirname,
   '..',
@@ -47,7 +48,11 @@ const upload = multer({
 });
 
 const app = express();
-app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
+const corsOrigin =
+  CLIENT_ORIGIN === '*'
+    ? true
+    : CLIENT_ORIGIN.split(',').map((s) => s.trim()).filter(Boolean);
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json({ limit: '1mb' }));
 
 function listUsersForMentions() {
@@ -815,6 +820,14 @@ app.use((err, _req, res, _next) => {
   }
   res.status(500).json({ error: 'Internal server error' });
 });
+
+if (fs.existsSync(CLIENT_DIST)) {
+  app.use(express.static(CLIENT_DIST));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(CLIENT_DIST, 'index.html'));
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`Task Manager API listening on http://localhost:${PORT}`);

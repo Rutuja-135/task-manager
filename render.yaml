@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: task-manager
+    runtime: node
+    plan: free
+    branch: main
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLIENT_ORIGIN
+        value: "*"
+      - key: UPLOAD_DIR
+        value: uploads
